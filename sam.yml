@@ -70,12 +70,7 @@ Resources:
           Statement:
             - Effect: Allow
               Action:
-                - dynamodb:Query
-                - dynamodb:Scan
-                - dynamodb:GetItem
-                - dynamodb:PutItem
-                - dynamodb:UpdateItem
-                - dynamodb:DeleteItem
+                - dynamodb:BatchWriteItem
               Resource:
                 Fn::Sub: arn:aws:dynamodb:${AWS::Region}:*:table/${MessageTable}
       Environment:
