@@ -8,7 +8,9 @@ module.exports = {
     'aws-sdk': 'aws-sdk',
   },
   output: {
-    filename: 'out/index.js',
+    libraryTarget: 'commonjs',
+    path: 'out',
+    filename: 'index.js',
   },
   module: {
     loaders: [
