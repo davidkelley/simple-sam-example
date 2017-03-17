@@ -8,7 +8,7 @@ const PUBLISH = 'publish';
 export default Schedule.wrap(class extends Schedule {
   async perform() {
     try {
-      const message = { body: 'Hello World!' };
+      const message = { body: 'Hello Sam!' };
       await this.publish(message);
       this.respond(OK);
     } catch (err) {

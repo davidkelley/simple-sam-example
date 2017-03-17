@@ -33,7 +33,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Description: |
-        Publishes "Hello world" to a specified SNS Topic at the defined
+        Publishes "Hello Sam" to a specified SNS Topic at the defined
         interval.
       Handler: index.enqueue
       Timeout: 15

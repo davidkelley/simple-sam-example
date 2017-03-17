@@ -27,7 +27,7 @@ describe('λ.publisher', () => {
       const response = await wrapped.run({});
       expect(mockSNSPublish).toHaveBeenCalledWith(expect.objectContaining({
         TopicArn: process.env.SNS_TOPIC,
-        Message: JSON.stringify({ body: 'Hello World!' }),
+        Message: JSON.stringify({ body: 'Hello Sam!' }),
       }), expect.any(Function))
     });
 

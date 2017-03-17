@@ -17,7 +17,7 @@ const wrapped = lambdaWrapper.wrap(mod, { handler: 'receiver' });
 describe('λ.receiver', () => {
   describe('when a message is received', () => {
     const messageGenerator = () => {
-      return JSON.stringify({ body: 'Hello World!' });
+      return JSON.stringify({ body: 'Hello Sam!' });
     };
 
     const recordGenerator = () => {
