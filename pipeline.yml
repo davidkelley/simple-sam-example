@@ -112,7 +112,7 @@ Resources:
                   Ref: Build
         - Name: Test
           Actions:
-            - Name: CreateStack
+            - Name: CreateChangeSet
               RunOrder: 1
               ActionTypeId:
                 Category: Deploy
@@ -122,15 +122,37 @@ Resources:
               InputArtifacts:
                 - Name: BuildOutput
               Configuration:
-                ActionMode: REPLACE_ON_FAILURE
+                ActionMode: CHANGE_SET_REPLACE
+                Capabilities: CAPABILITY_IAM
                 RoleArn:
                   Fn::GetAtt: [CloudformationRole, Arn]
                 StackName:
                   Fn::Sub: "${GitHubUser}-${Repo}-${Branch}-test"
+                ChangeSetName:
+                  Fn::Sub: "${GitHubUser}-${Repo}-${Branch}-test-changeset"
                 TemplatePath:
-                  Fn::Sub: "TemplateSource::${TemplateFileName}"
-            - Name: ApproveTestStack
+                  Fn::Sub: "BuildOutput::${TemplateFileName}"
+            - Name: ExecuteChangeSet
               RunOrder: 2
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: 1
+              Configuration:
+                ActionMode: CHANGE_SET_EXECUTE
+                Capabilities: CAPABILITY_IAM
+                OutputFileName: Outputs.json
+                ChangeSetName:
+                  Fn::Sub: "${GitHubUser}-${Repo}-${Branch}-test-changeset"
+                RoleArn:
+                  Fn::GetAtt: [CloudformationRole, Arn]
+                StackName:
+                  Fn::Sub: "${GitHubUser}-${Repo}-${Branch}-test"
+              OutputArtifacts:
+                - Name: TestOutput
+            - Name: ApproveTestStack
+              RunOrder: 3
               ActionTypeId:
                 Category: Approval
                 Owner: AWS
@@ -142,7 +164,7 @@ Resources:
                 CustomData:
                   Fn::Sub: 'Do you want to create a change set against the production stack and delete the ${GitHubUser}-${Repo}-${Branch}-test stack?'
             - Name: DeleteTestStack
-              RunOrder: 3
+              RunOrder: 4
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -167,14 +189,15 @@ Resources:
                 - Name: BuildOutput
               Configuration:
                 ActionMode: CHANGE_SET_REPLACE
+                Capabilities: CAPABILITY_IAM
                 RoleArn:
                   Fn::GetAtt: [CloudformationRole, Arn]
                 StackName:
                   Fn::Sub: "${GitHubUser}-${Repo}-${Branch}-release"
                 ChangeSetName:
-                  Fn::Sub: "${GitHubUser}-${Repo}-${Branch}-changeset"
+                  Fn::Sub: "${GitHubUser}-${Repo}-${Branch}-release-changeset"
                 TemplatePath:
-                  Fn::Sub: "TemplateSource::${TemplateFileName}"
+                  Fn::Sub: "BuildOutput::${TemplateFileName}"
             - Name: ApproveChangeSet
               RunOrder: 2
               ActionTypeId:
@@ -196,8 +219,9 @@ Resources:
                 Version: 1
               Configuration:
                 ActionMode: CHANGE_SET_EXECUTE
+                Capabilities: CAPABILITY_IAM
                 ChangeSetName:
-                  Fn::Sub: "${GitHubUser}-${Repo}-${Branch}-changeset"
+                  Fn::Sub: "${GitHubUser}-${Repo}-${Branch}-release-changeset"
                 RoleArn:
                   Fn::GetAtt: [CloudformationRole, Arn]
                 StackName:
@@ -244,6 +268,9 @@ Resources:
             Version: '2012-10-17'
             Statement:
               - Action:
+                  - 'cloudformation:*'
+                  - 's3:*'
+                  - 'iam:*'
                   - 'lambda:*'
                   - 'dynamodb:*'
                   - 'sns:*'
