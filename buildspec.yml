@@ -6,6 +6,9 @@ phases:
       - echo "Installing Project Dependencies..."
       - npm install
 
+      - echo "Creating artifacts directory"
+      - mkdir artifacts
+
   build:
     commands:
       - echo "Running lint..."
@@ -18,9 +21,9 @@ phases:
       - npm run build
 
       - echo "Compiling Cloudformation (Bucket: $S3_BUCKET)..."
-      - aws cloudformation package --template-file sam.yml --s3-bucket $S3_BUCKET --output-template-file template.yml
+      - aws cloudformation package --template-file sam.yml --s3-bucket $S3_BUCKET --output-template-file artifacts/$TEMPLATE_FILE_NAME
 
 artifacts:
   discard-paths: yes
   files:
-    template.yml
+    - artifacts/**/*
