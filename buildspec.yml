@@ -15,8 +15,8 @@ phases:
       - npm run test
       - echo "Packaging..."
       - npm run build
-      - echo "Compiling Cloudformation (Bucket: $S3_BUCKET)..."
-      - aws cloudformation package --template-file sam.yml --s3-bucket $S3_BUCKET --output-template-file artifacts/$TEMPLATE_FILE_NAME
+      - echo "Compiling Cloudformation (Bucket $S3_BUCKET)..."
+      - "aws cloudformation package --template-file sam.yml --s3-bucket $S3_BUCKET --output-template-file artifacts/$TEMPLATE_FILE_NAME"
 artifacts:
   discard-paths: yes
   files:
