@@ -7,3 +7,4 @@ coverage
 jest
 .DS_Store
 index.js
+out

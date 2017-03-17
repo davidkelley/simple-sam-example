@@ -8,7 +8,7 @@ module.exports = {
     'aws-sdk': 'aws-sdk',
   },
   output: {
-    filename: 'index.js',
+    filename: 'out/index.js',
   },
   module: {
     loaders: [
