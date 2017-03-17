@@ -1,0 +1,90 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Transform: AWS::Serverless-2016-10-31
+
+Description: Simple SAM Example
+
+Parameters:
+
+  Branch:
+    Type: String
+    Default: master
+
+  ScheduleExpression:
+    Type: String
+    Default: rate(1 hour)
+
+Resources:
+
+  PublisherTopic:
+    Type: AWS::SNS::Topic
+
+  MessageTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: id
+        Type: String
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+  PublisherFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: |
+        Publishes "Hello world" to a specified SNS Topic at the defined
+        interval.
+      Handler: index.enqueue
+      Timeout: 15
+      Runtime: nodejs4.3
+      CodeUri: ./index.js
+      Policies:
+        - Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: sns:Publish
+              Resource:
+                Ref: PublisherTopic
+      Environment:
+        Variables:
+          SNS_TOPIC:
+            Ref: PublisherTopic
+      Events:
+        Timer:
+          Type: Schedule
+          Properties:
+            Schedule:
+              Ref: ScheduleExpression
+
+  ReceiverFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: |
+        Receives SNS Messages and saves them to a Simple DDB Table
+      Handler: index.processor
+      Runtime: nodejs4.3
+      CodeUri: ./index.js
+      Policies:
+        - Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:Query
+                - dynamodb:Scan
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:UpdateItem
+                - dynamodb:DeleteItem
+              Resource:
+                Fn::Sub: arn:aws:dynamodb:${AWS::Region}:*:table/${MessageTable}
+      Environment:
+        Variables:
+          MESSAGE_DYNAMODB_TABLE:
+            Ref: MessageTable
+      Events:
+        SNS:
+          Type: SNS
+          Properties:
+            Topic:
+              Ref: PublisherTopic

@@ -1,0 +1,9 @@
+node_modules
+.serverless
+.webpack
+npm-debug.log
+.env
+coverage
+jest
+.DS_Store
+index.js
