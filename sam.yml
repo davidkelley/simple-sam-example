@@ -35,7 +35,7 @@ Resources:
       Description: |
         Publishes "Hello Sam" to a specified SNS Topic at the defined
         interval.
-      Handler: index.enqueue
+      Handler: index.publisher
       Timeout: 15
       Runtime: nodejs4.3
       CodeUri: ./out
@@ -62,7 +62,7 @@ Resources:
     Properties:
       Description: |
         Receives SNS Messages and saves them to a Simple DDB Table
-      Handler: index.processor
+      Handler: index.receiver
       Runtime: nodejs4.3
       CodeUri: ./out
       Policies:
