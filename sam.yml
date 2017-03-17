@@ -75,7 +75,7 @@ Resources:
                 Fn::Sub: arn:aws:dynamodb:${AWS::Region}:*:table/${MessageTable}
       Environment:
         Variables:
-          MESSAGE_DYNAMODB_TABLE:
+          MESSAGE_TABLE:
             Ref: MessageTable
       Events:
         SNS:
