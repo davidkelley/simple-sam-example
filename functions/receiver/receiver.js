@@ -37,8 +37,8 @@ export default SNS.wrap(class extends SNS {
         } else {
           resolve(data);
         }
-      })
-    })
+      });
+    });
   }
 
   get client() {

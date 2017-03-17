@@ -88,7 +88,7 @@ Resources:
                 Version: 1
                 Provider: GitHub
               OutputArtifacts:
-                Name: SourceOutput
+                - Name: SourceOutput
               Configuration:
                 Owner: !Ref GitHubUser
                 Repo: !Ref Repo
@@ -108,22 +108,8 @@ Resources:
               OutputArtifacts:
                 - Name: BuildOutput
               Configuration:
-                Name:
-                  Fn::Sub: "${GitHubUser}-${Repo}-${Branch}"
-                ServiceRole:
-                  Fn::GetAtt: [BuildRole, Arn]
-                Environment:
-                  Type: LINUX_CONTAINER
-                  ComputeType: BUILD_GENERAL1_SMALL
-                  Image: aws/codebuild/nodejs:6.3.1
-                  EnvironmentVariables:
-                  - Name: S3_BUCKET
-                    Value:
-                      Ref: PipelineArtifactStore
-                  - Name: TEMPLATE_FILE_NAME
-                    Value:
-                      Ref: TemplateFileName
-                TimeoutInMinutes: 10
+                ProjectName:
+                  Ref: Build
         - Name: Test
           Actions:
             - Name: CreateStack
@@ -134,7 +120,7 @@ Resources:
                 Provider: CloudFormation
                 Version: 1
               InputArtifacts:
-                - Name: TemplateSource
+                - Name: BuildOutput
               Configuration:
                 ActionMode: REPLACE_ON_FAILURE
                 RoleArn:
@@ -178,13 +164,13 @@ Resources:
                 Provider: CloudFormation
                 Version: 1
               InputArtifacts:
-                - Name: TemplateSource
+                - Name: BuildOutput
               Configuration:
                 ActionMode: CHANGE_SET_REPLACE
                 RoleArn:
                   Fn::GetAtt: [CloudformationRole, Arn]
                 StackName:
-                  Fn::Sub: "${GitHubUser}-${Repo}-${Branch}"
+                  Fn::Sub: "${GitHubUser}-${Repo}-${Branch}-release"
                 ChangeSetName:
                   Fn::Sub: "${GitHubUser}-${Repo}-${Branch}-changeset"
                 TemplatePath:
@@ -215,7 +201,31 @@ Resources:
                 RoleArn:
                   Fn::GetAtt: [CloudformationRole, Arn]
                 StackName:
-                  Fn::Sub: "${GitHubUser}-${Repo}-${Branch}"
+                  Fn::Sub: "${GitHubUser}-${Repo}-${Branch}-release"
+
+  Build:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name:
+        Fn::Sub: "${GitHubUser}-${Repo}-${Branch}"
+      TimeoutInMinutes: 10
+      ServiceRole:
+        Fn::GetAtt: [BuildRole, Arn]
+      Source:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/nodejs:6.3.1
+        EnvironmentVariables:
+          - Name: S3_BUCKET
+            Value:
+              Ref: PipelineArtifactStore
+          - Name: TEMPLATE_FILE_NAME
+            Value:
+              Ref: TemplateFileName
+      Artifacts:
+        Type: CODEPIPELINE
 
   CloudformationRole:
     Type: AWS::IAM::Role
@@ -258,6 +268,16 @@ Resources:
             Statement:
               - Action:
                   - 's3:*'
+                Effect: Allow
+                Resource:
+                  - Fn::Sub: "arn:aws:s3:::${PipelineArtifactStore}"
+                  - Fn::Sub: "arn:aws:s3:::${PipelineArtifactStore}/*"
+              - Action:
+                  - 'codebuild:*'
+                Effect: Allow
+                Resource:
+                  - Fn::Sub: "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${Build}"
+              - Action:
                   - 'cloudformation:CreateStack'
                   - 'cloudformation:DescribeStacks'
                   - 'cloudformation:DeleteStack'
@@ -267,10 +287,20 @@ Resources:
                   - 'cloudformation:DeleteChangeSet'
                   - 'cloudformation:DescribeChangeSet'
                   - 'cloudformation:SetStackPolicy'
+                Effect: Allow
+                Resource:
+                  - Fn::Sub: "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:*/${GitHubUser}-${Repo}-${Branch}-*/*"
+                  - '*'
+              - Action:
                   - 'iam:PassRole'
+                Effect: Allow
+                Resource:
+                  - '*'
+              - Action:
                   - 'sns:Publish'
                 Effect: Allow
-                Resource: '*'
+                Resource:
+                  - Fn::Sub: "arn:aws:sns:${AWS::Region}:*:${PipelineSNSTopic}"
 
   BuildRole:
     Type: AWS::IAM::Role
@@ -288,6 +318,12 @@ Resources:
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
+              - Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Effect: Allow
+                Resource: '*'
               - Action:
                   - 's3:*'
                   - 'cloudformation:*'
