@@ -38,7 +38,7 @@ Resources:
       Handler: index.enqueue
       Timeout: 15
       Runtime: nodejs4.3
-      CodeUri: ./index.js
+      CodeUri: ./
       Policies:
         - Version: 2012-10-17
           Statement:
@@ -64,7 +64,7 @@ Resources:
         Receives SNS Messages and saves them to a Simple DDB Table
       Handler: index.processor
       Runtime: nodejs4.3
-      CodeUri: ./index.js
+      CodeUri: ./
       Policies:
         - Version: 2012-10-17
           Statement:
